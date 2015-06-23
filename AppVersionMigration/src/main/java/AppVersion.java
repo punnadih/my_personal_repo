@@ -11,6 +11,15 @@ public class AppVersion {
     private String appKey;
     private int tenantId;
     private String version;
+    private String stage;
+
+    public String getStage() {
+        return stage;
+    }
+
+    public void setStage(String stage) {
+        this.stage = stage;
+    }
 
     public String getSubDomain() {
         return subDomain;

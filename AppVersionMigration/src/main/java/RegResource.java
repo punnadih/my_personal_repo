@@ -7,6 +7,16 @@ public class RegResource {
     private int contentId;
     private String version;
 
+    public int getRegVersion() {
+        return regVersion;
+    }
+
+    public void setRegVersion(int regVersion) {
+        this.regVersion = regVersion;
+    }
+
+    private int regVersion;
+
     public int getContentId() {
         return contentId;
     }

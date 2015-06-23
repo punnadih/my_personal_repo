@@ -30,7 +30,7 @@ public class Agent {
         connection = DriverManager.getConnection(
                 "jdbc:mysql://"+ args[0]+":"+args[1]+"?user="+args[2]+"&password="+args[3]);
         /*connection = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306?user=root&password=root");*/
+                "jdbc:mysql://192.168.16.4:3306?user=root&password=root");*/
     }
 
     private static void closeConnection() throws SQLException {
@@ -49,9 +49,11 @@ public class Agent {
                     List<RegResource> regResource = retrieveRegResources(tenantId);
                     for (RegResource resource : regResource) {
                         String content = retrieveBLOB(resource.getContentId());
+                        String stage = getStage(resource.getRegVersion());
                         if(content != null) {
                             AppVersion appVersion = new AppVersion();
                             appVersion.setTenantId(tenantId);
+                            appVersion.setStage(stage);
                             parseFile(content, appVersion);
                             if(appVersion.getAppKey() != null) {
                                 versionList.add(appVersion);
@@ -95,11 +97,35 @@ public class Agent {
 
     }
 
+    private static String getStage(int version) throws Exception {
+        String sql1 = "SELECT REG_VALUE FROM dbGovernanceCloud.REG_PROPERTY WHERE REG_ID IN (SELECT REG_PROPERTY_ID FROM" +
+                      " dbGovernanceCloud.REG_RESOURCE_PROPERTY WHERE REG_VERSION = ?) AND REG_NAME LIKE 'registry.lifecycle.%.state'";
+        ResultSet resultSet = null;
+        PreparedStatement preparedStatement = null;
+        String stage = null;
+        try {
+            preparedStatement = connection.prepareStatement(sql1);
+            preparedStatement.setInt(1, version);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                stage = resultSet.getString("REG_VALUE");
+            }
+        } catch (SQLException e) {
+            String msg = "Error while retrieving stage from database";
+            log.error(msg, e);
+            throw new Exception(msg, e);
+        } finally {
+            resultSet.close();
+            preparedStatement.close();
+        }
+        return stage;
+    }
+
     private static List<String> generateUpdateQueries(List<AppVersion> versionList) {
         List<String> queries = new ArrayList<String>(versionList.size());
         for (AppVersion version : versionList) {
             String updateQuery = "UPDATE AF_APPLICATION APP JOIN AF_VERSION VERSION ON APP.ID=VERSION.APPLICATION_ID " +
-                                 "SET VERSION.AUTO_BUILD=ONE, VERSION.AUTO_DEPLOY=TWO, VERSION.SUBDOMAIN='THREE' " +
+                                 "SET VERSION.STAGE='SEVEN', VERSION.AUTO_BUILD=ONE, VERSION.AUTO_DEPLOY=TWO, VERSION.SUBDOMAIN='THREE' " +
                                  "WHERE APP.TENANT_ID=FOUR AND APP.APPLICATION_KEY='FIVE' AND VERSION.VERSION_NAME='SIX';";
             updateQuery = updateQuery.replace("ONE", Integer.toString(version.getAutoBuild()));
             updateQuery = updateQuery.replace("TWO", Integer.toString(version.getAutoDeploy()));
@@ -107,6 +133,7 @@ public class Agent {
             updateQuery = updateQuery.replace("FOUR", Integer.toString(version.getTenantId()));
             updateQuery = updateQuery.replace("FIVE", version.getAppKey());
             updateQuery = updateQuery.replace("SIX", version.getVersion());
+            updateQuery = updateQuery.replace("SEVEN", version.getStage());
             queries.add(updateQuery);
 
         }
@@ -169,7 +196,7 @@ public class Agent {
     public static List<RegResource> retrieveRegResources(int tenantId) throws Exception {
         List<RegResource> resources = new ArrayList<RegResource>();
         String sql =
-                "SELECT REG_NAME,REG_CONTENT_ID FROM dbGovernanceCloud.REG_RESOURCE where " +
+                "SELECT REG_NAME,REG_CONTENT_ID, REG_VERSION FROM dbGovernanceCloud.REG_RESOURCE where " +
                 "REG_MEDIA_TYPE=\"application/vnd.wso2-appversion+xml\" and REG_TENANT_ID=" + tenantId;
         ResultSet resultSet = null;
         PreparedStatement preparedStatement = null;
@@ -180,10 +207,14 @@ public class Agent {
                 RegResource resource = new RegResource();
                 int contentId = resultSet.getInt("REG_CONTENT_ID");
                 String version = resultSet.getString("REG_NAME");
+                int regVersion = resultSet.getInt("REG_VERSION");
                 resource.setContentId(contentId);
                 resource.setVersion(version);
+                resource.setRegVersion(regVersion);
                 resources.add(resource);
             }
+
+
         } catch (SQLException e) {
             log.error("Error occurred while retrieving reg resource info", e);
             throw new Exception("Error occurred while retrieving reg resource info", e);
