@@ -45,19 +45,28 @@ public class Main {
         List<Tenant> tenants = null;
         try {
             createConnection(args, prop.getProperty("produserstoreds"));
-            tenants = getTenantIDs();
+
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            final String msg = "Error occurred while creating db connection";
+            log.error(msg, e);
+            throw new Exception(msg, e);
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
+            final String msg = "Error occurred while creating db connection";
+            log.error(msg, e);
+            throw new Exception(msg, e);
         } finally {
             try {
                 closeConnection();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
+        }
+        try {
+            tenants = getTenantIDs();
+        } catch (Exception e) {
+            final String msg = "Error occurred while retrieving tenants";
+            log.error(msg, e);
+            throw new Exception(msg, e);
         }
         for (Tenant tenant : tenants) {
             List<Domain> newDomains = new ArrayList<Domain>();
