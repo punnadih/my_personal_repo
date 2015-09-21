@@ -26,7 +26,7 @@ How to create the Executable jar
 
 
 Make sure you have the package name defined in all the class files.
-
+Update the migration.properties accordingly.
 Add DomainMappingMigration.MF manually to Project root.
 
 Manifest-Version: 1.0
