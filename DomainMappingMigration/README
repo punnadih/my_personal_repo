@@ -1,0 +1,58 @@
+How to create the Executable jar
+===============================
+
+├── resources
+│   ├── migration.properties
+│   └── wso2carbon.jks
+└── src
+    ├── lib
+    │   ├── commons-codec-1.2.jar
+    │   ├── commons-httpclient-3.1.0.wso2v1.jar
+    │   ├── commons-lang3-3.0.jar
+    │   ├── jackson-core-asl-1.9.9.jar
+    │   ├── jackson-mapper-asl-1.9.9.jar
+    │   ├── json-2.0.0.wso2v1.jar
+    │   ├── mysql-connector-java-5.1.27-bin.jar
+    │   └── org.wso2.carbon.logging-4.2.0.jar
+    └── main
+        └── java
+            ├── Agent.java
+            ├── Domain.java
+            ├── Domains.java
+            ├── PropertyLoader.java
+            ├── ServerResponse.java
+            ├── StratosHttpClient.java
+            └── Tenant.java
+
+
+Make sure you have the package name defined in all the class files.
+
+Add DomainMappingMigration.MF manually to Project root.
+
+Manifest-Version: 1.0
+Main-Class: src.main.java.Agent
+Class-Path: resources/ src/lib/commons-codec-1.2.jar src/lib/commons-httpclient-3.1.0.wso2v1.jar src/lib/commons-lang3-3.0.jar src/lib/jackson-core-asl-1.9.9.jar src/lib/jackson-mapper-asl-1.9.9.jar  src/lib/json-2.0.0.wso2v1.jar src/lib/mysql-connector-java-5.1.27-bin.jar src/lib/org.wso2.carbon.logging-4.2.0.jar
+
+
+
+
+Commands:
+javac -cp .:src/lib/* src/main/java/*.java
+jar cmf DomainMappingMigration.MF DomainMappingMigration.jar src/main/java/*.class resources/*
+
+How to run the jar
+==================
+Copy the following artifacts as shown below to a location:
+├── DomainMappingMigration.jar
+└── src
+    ├── lib
+    │   ├── commons-codec-1.2.jar
+    │   ├── commons-httpclient-3.1.0.wso2v1.jar
+    │   ├── commons-lang3-3.0.jar
+    │   ├── jackson-core-asl-1.9.9.jar
+    │   ├── jackson-mapper-asl-1.9.9.jar
+    │   ├── json-2.0.0.wso2v1.jar
+    │   ├── mysql-connector-java-5.1.27-bin.jar
+    │   └── org.wso2.carbon.logging-4.2.0.jar
+The execute the below command.
+$java -jar DomainMappingMigration.jar 
