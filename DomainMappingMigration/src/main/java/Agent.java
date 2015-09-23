@@ -158,18 +158,22 @@ public class Agent {
         String path = "cartridge/" + prop.getProperty("cartridgeType") + "/subscription/"
                       + getSubscriptionAlias(tenant) + "/domains";
         String response = null;
+        Domains domains = null;
         try {
             ServerResponse serverResponse = StratosHttpClient.sendGetRequest(getEndPointUrl(path),
                                                                              tenant.getAdmin() + "@" +
                                                                              tenant.getTenantDomain());
             response = serverResponse.getResponse();
+            if(serverResponse.getStatusCode() != 200){
+  		log.info("Error occurred while retrieving subscription domains for " + tenant + " response " +  response);
+  		return domains;
+	    }
         } catch (Exception e) {
             final String msg = "Error occurred while retrieving subscription domains ";
             log.error(msg, e);
             throw new Exception(msg, e);
         }
         ObjectMapper mapper = new ObjectMapper();
-        Domains domains = null;
         try {
             domains = mapper.readValue(response, Domains.class);
         } catch (IOException e) {
